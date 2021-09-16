@@ -71,6 +71,7 @@ int main()
     char history[15][MAX_COMMAND_SIZE];
     int status;
     pid_t phistory[15];
+    int history_counter =0;
     pid_t child;
     /*
      * Creating a series of if else loops to check the user command and perform
@@ -78,6 +79,10 @@ int main()
      * built in commands such as history and showpids before creating 
      * new processing using fork()
      */
+     if(token[0] == NULL)
+     {
+         continue;
+     }
     if(strcmp(token[0],"history")==0)
     {
     }
@@ -88,6 +93,11 @@ int main()
     {
         exit(0);
     }
+    else if(strcmp(token[0],"cd")==0)
+    {
+        chdir(token[1]);
+    }
+    
     //Starting with the child processes who will
     //Take advantage of the fork() function
     else
@@ -102,13 +112,14 @@ int main()
             if(birth == -1)
             {
                 printf("%s: Command not found\n",token[0]);
+                exit(1);
                 
             }
             
         }
     }
     wait(&status);
-       
+    
 
     free( working_root );
 
