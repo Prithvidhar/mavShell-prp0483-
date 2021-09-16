@@ -64,14 +64,51 @@ int main()
         token_count++;
     }
 
-    // Now print the tokenized input as a debug check
-    // \TODO Remove this code and replace with your shell functionality
-
-    int token_index  = 0;
-    for( token_index = 0; token_index < token_count; token_index ++ ) 
+    //My code starts here-------------------------------------------------------------------------------------------------------
+    
+    // Initializing array to hold commnad and process IDs so that i can
+    // iterate over them after the child process and display the results to the user
+    char history[15][MAX_COMMAND_SIZE];
+    int status;
+    pid_t phistory[15];
+    pid_t child;
+    /*
+     * Creating a series of if else loops to check the user command and perform
+     * the approriate linux response. I will start by checking for 
+     * built in commands such as history and showpids before creating 
+     * new processing using fork()
+     */
+    if(strcmp(token[0],"history")==0)
     {
-      printf("token[%d] = %s\n", token_index, token[token_index] );  
     }
+    else if(strcmp(token[0],"showpids")==0)
+    {
+    }
+    else if(strcmp(token[0],"exit")==0|| strcmp(token[0],"quit")==0)
+    {
+        exit(0);
+    }
+    //Starting with the child processes who will
+    //Take advantage of the fork() function
+    else
+    {   //This section of code will now be utilized by
+        //the child processes and will use execvp to perform
+        //its tasks
+        child = fork();
+        if(child == 0)
+        {
+            
+            int birth = execvp(token[0], &token[0]);
+            if(birth == -1)
+            {
+                printf("%s: Command not found\n",token[0]);
+                
+            }
+            
+        }
+    }
+    wait(&status);
+       
 
     free( working_root );
 
