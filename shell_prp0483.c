@@ -29,10 +29,11 @@ int main()
    char history[15][MAX_COMMAND_SIZE];
     int status;
     pid_t phistory[15];
-    int history_counter =0;
+    int history_counter =-1;
     int p_counter = -1;
     int child_flag = 0;
     int cross_flag = 0;
+    int cross_flag2 = 0;
     pid_t child;
     //my vars-----------------------------------------------
 
@@ -88,19 +89,34 @@ int main()
      */
      if(token[0] == NULL)
      {
+         free(working_root);
          continue;
+         
      }
      //Resetting the child flag, in case no child is born.
      //This happens every loop in case the user using the local
      //cd, history or showpids commands
+     // I am also incrementing the command history counter here in order
+     // keep place it in the correct position.
      child_flag = 0;
+     history_counter++;
     if(strcmp(token[0],"history")==0)
     {
-        if(history_counter < 15)
-        {
-            strncpy(history[history_counter],token[0],strlen(token[0]));
-        }
         
+        if(cross_flag2)
+        {
+           for(int i = 0; i <=14; i++)
+           {
+               printf("%d: %s\n",i,history[i]);
+           } 
+        }
+        else
+        {
+            for(int i = 0; i <history_counter; i++)
+            {
+               printf("%d: %s\n",i,history[i]);
+            } 
+        }
     }
     //This section of code is responsible for printing the 
     // the pids of children born from this shell
@@ -170,6 +186,18 @@ int main()
         }
         phistory[p_counter] = child;
     }
+    //Doing the same thing as the showpids command for the history
+    // command. If the counter is 15, the position will loop back to
+    // the beginning of the history array
+    if(history_counter == 15)
+    {
+        history_counter = 0;
+        cross_flag2 = 1;
+    }
+    //Adding the recently typing in command to the history
+    // array. I utilized the strncpy to copy the contents of 
+    // working_root to the correct array position
+    strncpy(history[history_counter], working_root,strlen(working_root));
     
     
     
