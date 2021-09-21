@@ -23,6 +23,18 @@ int main()
 {
 
   char * cmd_str = (char*) malloc( MAX_COMMAND_SIZE );
+  //myvars------------------------------------------------
+  // Initializing array to hold commandsd and process IDs so that i can
+// iterate over them after the child process and display the results to the user
+   char history[15][MAX_COMMAND_SIZE];
+    int status;
+    pid_t phistory[15];
+    int history_counter =0;
+    int p_counter = -1;
+    int child_flag = 0;
+    int cross_flag = 0;
+    pid_t child;
+    //my vars-----------------------------------------------
 
   while( 1 )
   {
@@ -66,13 +78,8 @@ int main()
 
     //My code starts here-------------------------------------------------------------------------------------------------------
     
-    // Initializing array to hold commnad and process IDs so that i can
-    // iterate over them after the child process and display the results to the user
-    char history[15][MAX_COMMAND_SIZE];
-    int status;
-    pid_t phistory[15];
-    int history_counter =0;
-    pid_t child;
+    
+   
     /*
      * Creating a series of if else loops to check the user command and perform
      * the approriate linux response. I will start by checking for 
@@ -83,11 +90,40 @@ int main()
      {
          continue;
      }
+     //Resetting the child flag, in case no child is born.
+     //This happens every loop in case the user using the local
+     //cd, history or showpids commands
+     child_flag = 0;
     if(strcmp(token[0],"history")==0)
     {
+        if(history_counter < 15)
+        {
+            strncpy(history[history_counter],token[0],strlen(token[0]));
+        }
+        
     }
+    //This section of code is responsible for printing the 
+    // the pids of children born from this shell
+    // a flag is used to identify when 15 children have made
+    // when flag is raised all past 15 children's process IDs
+    // will be displayes else fewer ids will be displayed
     else if(strcmp(token[0],"showpids")==0)
     {
+        if(cross_flag)
+        {
+            for(int i =0;i <= 14;i++)
+            {
+                printf("%d: %ld\n",i,phistory[i]);
+            }
+        }
+        else
+        {
+            for(int i =0;i <= p_counter;i++)
+            {
+                printf("%d: %ld\n",i,phistory[i]);
+            }
+        }
+        
     }
     else if(strcmp(token[0],"exit")==0|| strcmp(token[0],"quit")==0)
     {
@@ -104,6 +140,8 @@ int main()
     {   //This section of code will now be utilized by
         //the child processes and will use execvp to perform
         //its tasks
+        child_flag = 1;
+        p_counter++;
         child = fork();
         if(child == 0)
         {
@@ -119,6 +157,21 @@ int main()
         }
     }
     wait(&status);
+    //After the child is finished, if executed its pid is stored
+    // in the array. It's position is based on the counter. If
+    // The counter goes over 15 positions, the pid will be placed
+    // from the top again using the if statement
+    if(child_flag)
+    {
+        if(p_counter  == 15)
+        {
+            p_counter = 0;
+            cross_flag = 1;
+        }
+        phistory[p_counter] = child;
+    }
+    
+    
     
 
     free( working_root );
