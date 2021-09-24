@@ -197,7 +197,8 @@ int main()
     //Adding the recently typing in command to the history
     // array. I utilized the strncpy to copy the contents of 
     // working_root to the correct array position
-    strncpy(history[history_counter], working_root,strlen(working_root));
+    working_root[strlen(working_root)] = '\0';
+    strncpy(history[history_counter], working_root,MAX_COMMAND_SIZE);
     
     
     
