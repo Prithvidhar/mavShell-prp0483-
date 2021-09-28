@@ -48,6 +48,35 @@ int main()
     // inputs something since fgets returns NULL when there
     // is no input
     while( !fgets (cmd_str, MAX_COMMAND_SIZE, stdin) );
+    
+    //Altering cmd_str when the !n command is used
+    // this way i can use the same processes without
+    // making a new if block
+    if(cmd_str[0] == '!')
+    {
+        if(cross_flag2)
+        {
+            strncpy(cmd_str, history[(int)cmd_str[1] - '0'], MAX_COMMAND_SIZE);
+        }
+        else if((int)cmd_str[1] - '0'>=0)
+        {
+            if((int)cmd_str[1]-'0'<= history_counter)
+            {
+                strncpy(cmd_str, history[(int)cmd_str[1]-'0'], MAX_COMMAND_SIZE);
+            }
+            else 
+            {
+                printf("Command not in history.\n");
+            } 
+        }
+        else
+        {
+            printf("Command not in history.\n");
+        }
+        
+    }
+    
+    
 
     /* Parse input */
     char *token[MAX_NUM_ARGUMENTS];
@@ -197,8 +226,8 @@ int main()
     //Adding the recently typing in command to the history
     // array. I utilized the strncpy to copy the contents of 
     // working_root to the correct array position
-    working_root[strlen(working_root)] = '\0';
-    strncpy(history[history_counter], working_root,MAX_COMMAND_SIZE);
+    cmd_str[strlen(cmd_str)-1] = '\0';
+    strncpy(history[history_counter], cmd_str,MAX_COMMAND_SIZE);
     
     
     
