@@ -27,6 +27,7 @@ int main()
   // Initializing array to hold commandsd and process IDs so that i can
 // iterate over them after the child process and display the results to the user
    char history[15][MAX_COMMAND_SIZE];
+   char* head = (char*) malloc( MAX_COMMAND_SIZE );
     int status;
     pid_t phistory[15];
     int history_counter =-1;
@@ -48,7 +49,7 @@ int main()
     // inputs something since fgets returns NULL when there
     // is no input
     while( !fgets (cmd_str, MAX_COMMAND_SIZE, stdin) );
-    
+   
     //Altering cmd_str when the !n command is used
     // this way i can use the same processes without
     // making a new if block
@@ -56,27 +57,42 @@ int main()
     {
         if(cross_flag2)
         {
-            strncpy(cmd_str, history[(int)cmd_str[1] - '0'], MAX_COMMAND_SIZE);
+            if(cmd_str[1] == '0')
+            {
+                 
+                strncpy(cmd_str, head, MAX_COMMAND_SIZE);
+                cmd_str[strlen(cmd_str)] = '\n';
+                
+            }
+            else
+            {
+                strncpy(cmd_str, history[(int)cmd_str[1] - '0'], MAX_COMMAND_SIZE);
+                cmd_str[strlen(cmd_str)] = '\n';
+            }
+            
         }
         else if((int)cmd_str[1] - '0'>=0)
         {
             if((int)cmd_str[1]-'0'<= history_counter)
             {
                 strncpy(cmd_str, history[(int)cmd_str[1]-'0'], MAX_COMMAND_SIZE);
+                cmd_str[strlen(cmd_str)] = '\n';
             }
             else 
             {
                 printf("Command not in history.\n");
+                continue;
             } 
         }
         else
         {
             printf("Command not in history.\n");
+            continue;
         }
         
     }
     
-    
+     //printf("%s\n", cmd_str);
 
     /* Parse input */
     char *token[MAX_NUM_ARGUMENTS];
@@ -221,6 +237,7 @@ int main()
     if(history_counter == 15)
     {
         history_counter = 0;
+        strncpy(head, history[0],MAX_COMMAND_SIZE);
         cross_flag2 = 1;
     }
     //Adding the recently typing in command to the history
@@ -233,6 +250,7 @@ int main()
     
 
     free( working_root );
+   // free(head);
 
   }
   return 0;
