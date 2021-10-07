@@ -1,4 +1,10 @@
-// Code for parsing input and setting up shell provided by Trevor Bakker
+/*
+
+ Name: Prithvidhar Pudu
+ ID: 1001570483
+
+*/
+//Code for parsing input and setting up shell provided by Trevor Bakker
 // for CSE 3320
 #define _GNU_SOURCE
 
@@ -17,17 +23,26 @@
 
 #define MAX_COMMAND_SIZE 255    // The maximum command-line size
 
-#define MAX_NUM_ARGUMENTS 5     // Mav shell only supports five arguments
+#define MAX_NUM_ARGUMENTS 11     // Mav shell only supports five arguments
+								// Changed for current assignment
 
 int main()
 {
 
   char * cmd_str = (char*) malloc( MAX_COMMAND_SIZE );
   //myvars------------------------------------------------
-  // Initializing array to hold commandsd and process IDs so that i can
+  // Initializing array to hold commands and process IDs so that i can
 // iterate over them after the child process and display the results to the user
+//The various counters are used to keep track of the commands position in their respective
+//arrays.
+// The child flag is used to identify whether a command created a child process. The cross_flags are 
+//used to identify if the phistory and history tabs have crosses their 15 item limit.
+// The head array is used to keep track of the values that the history command overwrite.
+//This is to ensure the user can use the "!" command effectively.
+//After a loop the head of command is replaced with "his" so that the user can call the "!" properly
+//and get the correct result
    char history[15][MAX_COMMAND_SIZE];
-   char* head = (char*) malloc( MAX_COMMAND_SIZE );
+   char head[15][MAX_COMMAND_SIZE];
     int status;
     pid_t phistory[15];
     int history_counter =-1;
@@ -35,7 +50,11 @@ int main()
     int child_flag = 0;
     int cross_flag = 0;
     int cross_flag2 = 0;
+	char* his = "history";
     pid_t child;
+	char sub[MAX_COMMAND_SIZE];
+	int c = 0;
+	
     //my vars-----------------------------------------------
 
   while( 1 )
@@ -53,31 +72,55 @@ int main()
     //Altering cmd_str when the !n command is used
     // this way i can use the same processes without
     // making a new if block
+	//if the "!" command calls a history command the value of its head is used
+	//which is located in the head array.
+	//I use sub to store the command number after the "!" character. I use a while loop to create a
+	//substring
+	//The apprpriate boundary checks are also performed to prevent segmentation faults
+	//The boundary checks are done checking the boundaries based on whther the 15 item limit is reached
+	c = 0;
+	sub[0] = '\0';
     if(cmd_str[0] == '!')
     {
+		while(c<MAX_COMMAND_SIZE)
+		{
+			sub[c] = cmd_str[(2+c)-1];
+			c++;
+		}
+		sub[c] = '\0';
+		int num = atoi(sub);
+		
         if(cross_flag2)
         {
-            if(cmd_str[1] == '0')
+            if( strcmp(history[num], "history") ==0 )
             {
                  
-                strncpy(cmd_str, head, MAX_COMMAND_SIZE);
-                cmd_str[strlen(cmd_str)] = '\n';
+                strncpy(cmd_str, head[num], MAX_COMMAND_SIZE);
+                
+		
+				cmd_str[strlen(cmd_str)] = '\n';
                 
             }
             else
             {
-                strncpy(cmd_str, history[(int)cmd_str[1] - '0'], MAX_COMMAND_SIZE);
+                strncpy(cmd_str, history[num], MAX_COMMAND_SIZE);
                 cmd_str[strlen(cmd_str)] = '\n';
             }
             
         }
-        else if((int)cmd_str[1] - '0'>=0)
+        else if(num>=0 && num <=14)
         {
-            if((int)cmd_str[1]-'0'<= history_counter)
+            if(!cross_flag2 && num<= history_counter)
             {
-                strncpy(cmd_str, history[(int)cmd_str[1]-'0'], MAX_COMMAND_SIZE);
+                strncpy(cmd_str, history[num], MAX_COMMAND_SIZE);
                 cmd_str[strlen(cmd_str)] = '\n';
             }
+			else if(cross_flag2)
+			{
+				strncpy(cmd_str, history[num], MAX_COMMAND_SIZE);
+				cmd_str[strlen(cmd_str)] = '\n';
+				printf("Debug: %s\n",history[num]);
+			}
             else 
             {
                 printf("Command not in history.\n");
@@ -91,8 +134,15 @@ int main()
         }
         
     }
-    
-     //printf("%s\n", cmd_str);
+	//Here if the history array has crossed its 15 item limit for the first time
+	//it will replace a command head with history to ensure that the "!" will call history
+	//and not the previous value
+	if(history_counter>=0)
+	{
+		 strncpy(head[history_counter],his,MAX_COMMAND_SIZE);
+		
+	}
+     
 
     /* Parse input */
     char *token[MAX_NUM_ARGUMENTS];
@@ -130,8 +180,9 @@ int main()
      * Creating a series of if else loops to check the user command and perform
      * the approriate linux response. I will start by checking for 
      * built in commands such as history and showpids before creating 
-     * new processing using fork()
+     * new processes using fork()
      */
+	//This if statement handles the cases where the does not enter anything
      if(token[0] == NULL)
      {
          free(working_root);
@@ -139,10 +190,12 @@ int main()
          
      }
      //Resetting the child flag, in case no child is born.
-     //This happens every loop in case the user using the local
+     //This happens every loop in case the user uses the local
      //cd, history or showpids commands
      // I am also incrementing the command history counter here in order
-     // keep place it in the correct position.
+     // to place it in the correct position.
+	// Two for loops are used to display the history. One case when more than 15 commands have been entered
+	// and another when less than 15 have been entered.
      child_flag = 0;
      history_counter++;
     if(strcmp(token[0],"history")==0)
@@ -162,6 +215,7 @@ int main()
                printf("%d: %s\n",i,history[i]);
             } 
         }
+		
     }
     //This section of code is responsible for printing the 
     // the pids of children born from this shell
@@ -186,13 +240,20 @@ int main()
         }
         
     }
+	//This else if statement handles the quit and exit statements which cause the program
+	// to exit with a status of 0
     else if(strcmp(token[0],"exit")==0|| strcmp(token[0],"quit")==0)
     {
         exit(0);
     }
+	//This else if statement executes the cd command using the chdir() method
     else if(strcmp(token[0],"cd")==0)
     {
-        chdir(token[1]);
+       if(chdir(token[1])== -1)
+		{
+			printf("Error changing to directory. Please try again\n");
+			
+		}
     }
     
     //Starting with the child processes who will
@@ -237,12 +298,18 @@ int main()
     if(history_counter == 15)
     {
         history_counter = 0;
-        strncpy(head, history[0],MAX_COMMAND_SIZE);
+        
         cross_flag2 = 1;
     }
-    //Adding the recently typing in command to the history
+    //Adding the recently typed in command to the history
     // array. I utilized the strncpy to copy the contents of 
     // working_root to the correct array position
+	//I also added the overwritten command to the head array so that the user
+	//can use the "!" command accurately
+	if(strcmp(token[0],"history")==0)
+	{
+		strncpy(head[history_counter],history[history_counter],MAX_COMMAND_SIZE);
+	}
     cmd_str[strlen(cmd_str)-1] = '\0';
     strncpy(history[history_counter], cmd_str,MAX_COMMAND_SIZE);
     
@@ -250,7 +317,7 @@ int main()
     
 
     free( working_root );
-   // free(head);
+   
 
   }
   return 0;
